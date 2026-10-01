@@ -51,6 +51,12 @@
       color: var(--accent); margin: 0 0 3px;
     }
     h1 { font-family: var(--serif); font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
+    .lang-btn {
+      margin-left: auto; align-self: flex-start; font-size: 18px; line-height: 1; cursor: pointer;
+      background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 6px 9px;
+      transition: border-color .18s ease, transform .18s ease;
+    }
+    .lang-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
 
     /* Description card */
     .description {
@@ -129,31 +135,34 @@
     <header>
       <div class="logo"><img src="logo.png" alt="Hotzones" /></div>
       <div>
-        <p class="eyebrow">MVP · Previsión de demanda</p>
-        <h1>Mapa de Hotzones — Bogotá</h1>
+        <p class="eyebrow" id="eyebrow">MVP · Previsión de demanda</p>
+        <h1 id="h1">Mapa de Hotzones — Bogotá</h1>
       </div>
+      <button id="langBtn" class="lang-btn" title="English" aria-label="Switch language">🇺🇸</button>
     </header>
 
     <section class="description">
-      <p>
-        Este panel muestra la intensidad de pedidos de restaurantes en Bogotá usando
-        <strong>celdas hexagonales H3</strong>, el sistema de mallas de Uber que divide la ciudad en
-        hexágonos de área uniforme. En la <strong>resolución 9</strong>, cada hexágono cubre
-        aproximadamente <strong>0,1 km²</strong>, permitiendo analizar zonas muy específicas con alta precisión.
-      </p>
-      <p>
-        Cada celda representa la concentración de pedidos a lo largo del día, agregados en ventanas de
-        <strong>60 minutos</strong> — así se observa cómo cambia la demanda desde la madrugada hasta las horas
-        pico de almuerzo y cena.
-      </p>
-      <p>Usa el control de tiempo en la parte inferior del mapa para:</p>
-      <ul>
-        <li>Visualizar la “respiración” de la ciudad a diferentes horas.</li>
-        <li>Identificar hotzones de mayor demanda en almuerzo y cena.</li>
-        <li>Explorar patrones que orientan el posicionamiento óptimo de repartidores.</li>
-      </ul>
+      <div id="desc">
+        <p>
+          Este panel muestra la intensidad de pedidos de restaurantes en Bogotá usando
+          <strong>celdas hexagonales H3</strong>, el sistema de mallas de Uber que divide la ciudad en
+          hexágonos de área uniforme. En la <strong>resolución 9</strong>, cada hexágono cubre
+          aproximadamente <strong>0,1 km²</strong>, permitiendo analizar zonas muy específicas con alta precisión.
+        </p>
+        <p>
+          Cada celda representa la concentración de pedidos a lo largo del día, agregados en ventanas de
+          <strong>60 minutos</strong> — así se observa cómo cambia la demanda desde la madrugada hasta las horas
+          pico de almuerzo y cena.
+        </p>
+        <p>Usa el control de tiempo en la parte inferior del mapa para:</p>
+        <ul>
+          <li>Visualizar la “respiración” de la ciudad a diferentes horas.</li>
+          <li>Identificar hotzones de mayor demanda en almuerzo y cena.</li>
+          <li>Explorar patrones que orientan el posicionamiento óptimo de repartidores.</li>
+        </ul>
+      </div>
 
-      <div class="chips">
+      <div class="chips" id="chips">
         <div class="chip">Ciudad: Bogotá</div>
         <div class="chip">Granularidad: H3 res 9 (~0,1 km²)</div>
         <div class="chip">Ventana: 60 min</div>
@@ -172,7 +181,7 @@
       <iframe id="mapFrame" src="bogota_h3_30d.html"></iframe>
     </div>
 
-    <footer>Un MVP de Crisla Pott · <a href="https://crislapott.com" target="_blank" rel="noopener">ver portafolio ↗</a></footer>
+    <footer id="footer">Un MVP de Crisla Pott · <a href="https://crislapott.com" target="_blank" rel="noopener">ver portafolio ↗</a></footer>
 
   </div>
 
@@ -181,27 +190,90 @@
     var HIST = "bogota_h3_30d.html";
     var FORECAST = "https://hotzones-bogota.s3.us-east-1.amazonaws.com/bogota_h3_forecast.html";
 
-    var btnHist = document.getElementById('btnHist');
-    var btnForecast = document.getElementById('btnForecast');
-    var frame = document.getElementById('mapFrame');
-    var loading = document.getElementById('loading');
-    var loadingText = document.getElementById('loadingText');
-    var note = document.getElementById('note');
+    // ---- i18n: landing bilíngue (ES padrão · EN) ----
+    var I18N = {
+      es: {
+        title: "Mapa de Hotzones — Bogotá",
+        metaDesc: "MVP geoespacial: mapa de intensidad de pedidos en Bogotá con celdas hexagonales H3, histórico y predicción.",
+        eyebrow: "MVP · Previsión de demanda",
+        h1: "Mapa de Hotzones — Bogotá",
+        desc: '<p>Este panel muestra la intensidad de pedidos de restaurantes en Bogotá usando <strong>celdas hexagonales H3</strong>, el sistema de mallas de Uber que divide la ciudad en hexágonos de área uniforme. En la <strong>resolución 9</strong>, cada hexágono cubre aproximadamente <strong>0,1 km²</strong>, permitiendo analizar zonas muy específicas con alta precisión.</p>'
+          + '<p>Cada celda representa la concentración de pedidos a lo largo del día, agregados en ventanas de <strong>60 minutos</strong> — así se observa cómo cambia la demanda desde la madrugada hasta las horas pico de almuerzo y cena.</p>'
+          + '<p>Usa el control de tiempo en la parte inferior del mapa para:</p>'
+          + '<ul><li>Visualizar la “respiración” de la ciudad a diferentes horas.</li><li>Identificar hotzones de mayor demanda en almuerzo y cena.</li><li>Explorar patrones que orientan el posicionamiento óptimo de repartidores.</li></ul>',
+        chips: ["Ciudad: Bogotá", "Granularidad: H3 res 9 (~0,1 km²)", "Ventana: 60 min", "Fuente: pedidos últimos 30 días"],
+        btnHist: "📊 Ver histórico (últimos 7 días)",
+        btnForecast: "🔮 Ver predicción (próximos 3 días)",
+        loadingHist: "Cargando mapa…",
+        loadingForecast: "Cargando predicción… (mapa pesado, puede tardar)",
+        noteForecast: "La predicción es un mapa grande; la primera carga puede tardar unos segundos.",
+        footer: 'Un MVP de Crisla Pott · <a href="https://crislapott.com" target="_blank" rel="noopener">ver portafolio ↗</a>',
+        flag: "🇺🇸", flagTitle: "English"
+      },
+      en: {
+        title: "Hotzones Map — Bogotá",
+        metaDesc: "Geospatial MVP: a map of order intensity in Bogotá with H3 hexagonal cells, history and forecast.",
+        eyebrow: "MVP · Demand forecasting",
+        h1: "Hotzones Map — Bogotá",
+        desc: '<p>This panel shows the intensity of restaurant orders in Bogotá using <strong>H3 hexagonal cells</strong>, Uber\'s grid system that splits the city into uniform-area hexagons. At <strong>resolution 9</strong>, each hexagon covers about <strong>0.1 km²</strong>, letting you analyze very specific zones with high precision.</p>'
+          + '<p>Each cell represents the concentration of orders throughout the day, aggregated in <strong>60-minute</strong> windows — so you can see how demand shifts from the early morning to the lunch and dinner peaks.</p>'
+          + '<p>Use the time control at the bottom of the map to:</p>'
+          + '<ul><li>Visualize the city’s “breathing” at different hours.</li><li>Spot the hotzones with the highest demand at lunch and dinner.</li><li>Explore patterns that guide optimal courier positioning.</li></ul>',
+        chips: ["City: Bogotá", "Granularity: H3 res 9 (~0.1 km²)", "Window: 60 min", "Source: orders, last 30 days"],
+        btnHist: "📊 View history (last 7 days)",
+        btnForecast: "🔮 View forecast (next 3 days)",
+        loadingHist: "Loading map…",
+        loadingForecast: "Loading forecast… (large map, may take a moment)",
+        noteForecast: "The forecast is a large map; the first load may take a few seconds.",
+        footer: 'An MVP by Crisla Pott · <a href="https://crislapott.com" target="_blank" rel="noopener">view portfolio ↗</a>',
+        flag: "🇨🇴", flagTitle: "Español"
+      }
+    };
+
+    var $ = function (id) { return document.getElementById(id); };
+    var frame = $('mapFrame'), loading = $('loading'), loadingText = $('loadingText'), note = $('note');
+    var btnHist = $('btnHist'), btnForecast = $('btnForecast');
+    var current = 'hist';
+
+    var lang = 'es';
+    try { lang = localStorage.getItem('hz_lang') || ((navigator.language || '').slice(0, 2) === 'en' ? 'en' : 'es'); } catch (e) {}
+
+    function applyLang(l) {
+      lang = l; var d = I18N[l];
+      document.documentElement.lang = l;
+      document.title = d.title;
+      var md = document.querySelector('meta[name="description"]'); if (md) md.setAttribute('content', d.metaDesc);
+      $('eyebrow').textContent = d.eyebrow;
+      $('h1').textContent = d.h1;
+      $('desc').innerHTML = d.desc;
+      $('chips').innerHTML = d.chips.map(function (c) { return '<div class="chip">' + c + '</div>'; }).join('');
+      btnHist.textContent = d.btnHist;
+      btnForecast.textContent = d.btnForecast;
+      $('footer').innerHTML = d.footer;
+      var lb = $('langBtn'); lb.textContent = d.flag; lb.title = d.flagTitle;
+      note.textContent = current === 'forecast' ? d.noteForecast : '';
+      try { localStorage.setItem('hz_lang', l); } catch (e) {}
+    }
 
     frame.addEventListener('load', function () { loading.classList.remove('on'); });
 
     function show(which) {
+      current = which;
+      var d = I18N[lang];
       var isForecast = which === 'forecast';
       btnForecast.classList.toggle('inactive', !isForecast);
       btnHist.classList.toggle('inactive', isForecast);
-      loadingText.textContent = isForecast ? 'Cargando predicción… (mapa pesado, puede tardar)' : 'Cargando mapa…';
-      note.textContent = isForecast ? 'La predicción es un mapa grande; la primera carga puede tardar unos segundos.' : '';
+      loadingText.textContent = isForecast ? d.loadingForecast : d.loadingHist;
+      note.textContent = isForecast ? d.noteForecast : '';
       loading.classList.add('on');
       frame.src = isForecast ? FORECAST : HIST;
     }
 
     btnHist.addEventListener('click', function () { show('hist'); });
     btnForecast.addEventListener('click', function () { show('forecast'); });
+    $('langBtn').addEventListener('click', function () { applyLang(lang === 'es' ? 'en' : 'es'); });
+
+    applyLang(lang);
   </script>
 </body>
 </html>
